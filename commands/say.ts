@@ -13,7 +13,7 @@ import {
 	RESTPostAPIChannelMessageJSONBody,
 } from "discord-api-types/v10";
 import { authHeader } from "../modules/env";
-import fetch from "node-fetch";
+import { fetch } from "../modules/fetch";
 
 const filter = new badwords({ placeHolder: "#" });
 filter.removeWords("balls", "ball");
