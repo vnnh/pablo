@@ -13,6 +13,7 @@ import {
 	RESTPostAPIChannelMessageJSONBody,
 } from "discord-api-types/v10";
 import { authHeader } from "../modules/env";
+import fetch from "node-fetch";
 
 const filter = new badwords({ placeHolder: "#" });
 filter.removeWords("balls", "ball");
@@ -30,7 +31,7 @@ export default async (
 	let text = interaction.data.options![0].value as string;
 	text = text.replace("@everyone", "");
 	text = filter.clean(text);
-	if (interaction.data.options![1].value === true)
+	if (interaction.data.options![1]?.value === true)
 		text = text
 			.split("")
 			.map((a) => tinyCharacters.get(a) ?? a)

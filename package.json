@@ -17,6 +17,7 @@
     "discord-api-types": "^0.36.3",
     "dotenv": "^16.0.1",
     "imagescript": "^1.2.9",
+    "node-fetch": "^3.2.9",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
