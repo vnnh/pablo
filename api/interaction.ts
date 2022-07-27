@@ -59,7 +59,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
 		);
 		if (ret) return response.status(200).send(ret);
 
-		return response.status(200);
+		return response.status(200).send("Success");
 	}
 
 	return response.status(400).send("Bad request");
