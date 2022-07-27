@@ -42,16 +42,11 @@ const verifySignature = async (request: VercelRequest): Promise<boolean> => {
 
 export default async (request: VercelRequest, response: VercelResponse) => {
 	const valid = await verifySignature(request);
-	if (!valid) {
-		response.status(401).send("Invalid request");
-		return;
-	}
+	if (!valid) return response.status(401).send("Invalid request");
 
 	const interaction: APIBaseInteraction<InteractionType, APIChatInputApplicationCommandInteractionData> =
 		request.body;
-	if (interaction.type === InteractionType.Ping) {
-		response.status(200).send({ type: InteractionType.Ping });
-	}
+	if (interaction.type === InteractionType.Ping) return response.status(200).send({ type: InteractionType.Ping });
 
 	if (interaction.type === InteractionType.ApplicationCommand) {
 		const handler = commands.get(interaction.data.name);
