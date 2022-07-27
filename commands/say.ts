@@ -2,11 +2,9 @@ import badwords from "bad-words";
 import tinyCharacters from "../modules/characters";
 import { api } from "../constant";
 import {
-	APIApplicationCommandInteractionDataBooleanOption,
-	APIApplicationCommandInteractionDataStringOption,
 	APIBaseInteraction,
-	APIChatInputApplicationCommandInteractionData,
 	APIInteractionResponse,
+	ApplicationCommandOptionType,
 	InteractionResponseType,
 	InteractionType,
 	MessageFlags,
@@ -14,6 +12,8 @@ import {
 } from "discord-api-types/v10";
 import { authHeader } from "../modules/env";
 import fetch from "node-fetch";
+import { InteractionData, NamedInteractionOption } from "../@types/discord";
+import getFromOptions from "../modules/getFromOptions";
 
 const filter = new badwords({ placeHolder: "#" });
 filter.removeWords("balls", "ball");
@@ -21,17 +21,22 @@ filter.removeWords("balls", "ball");
 export default async (
 	interaction: APIBaseInteraction<
 		InteractionType.ApplicationCommand,
-		APIChatInputApplicationCommandInteractionData & {
-			options: Array<
-				APIApplicationCommandInteractionDataStringOption | APIApplicationCommandInteractionDataBooleanOption
-			>;
+		InteractionData & {
+			options: [
+				NamedInteractionOption<ApplicationCommandOptionType.String, "message">,
+				NamedInteractionOption<ApplicationCommandOptionType.Boolean, "tiny">,
+			];
 		}
 	>,
 ) => {
-	let text = interaction.data.options![0].value as string;
+	let text = "";
+	const messageOption = getFromOptions(interaction.data, "message");
+	if (messageOption.result === "success") text = messageOption.option.value;
 	text = text.replace("@everyone", "");
 	text = filter.clean(text);
-	if (interaction.data.options![1]?.value === true)
+
+	const tinyOption = getFromOptions(interaction.data, "tiny");
+	if (tinyOption.result === "success" && tinyOption.option.value === true)
 		text = text
 			.split("")
 			.map((a) => tinyCharacters.get(a) ?? a)
