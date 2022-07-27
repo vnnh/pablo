@@ -1,4 +1,0 @@
-import type { RequestInfo, RequestInit } from "node-fetch";
-
-export const fetch = (url: RequestInfo, init?: RequestInit) =>
-	import("node-fetch").then(({ default: fetch }) => fetch(url, init));

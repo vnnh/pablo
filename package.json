@@ -18,10 +18,11 @@
 		"discord-api-types": "^0.36.3",
 		"dotenv": "^16.0.1",
 		"imagescript": "^1.2.9",
-		"node-fetch": "^3.2.9",
+		"node-fetch": "^2.6.7",
 		"tweetnacl": "^1.0.3"
 	},
 	"devDependencies": {
+		"@types/node-fetch": "^2.6.1",
 		"@typescript-eslint/eslint-plugin": "^5.31.0",
 		"@typescript-eslint/parser": "^5.31.0",
 		"@vercel/node": "^2.4.5",
