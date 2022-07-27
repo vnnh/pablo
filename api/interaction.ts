@@ -24,10 +24,9 @@ const buffer = async (readable: Readable) => {
 
 const hexToUint8Array = (hex: string) => new Uint8Array(hex.match(/.{1,2}/g)!.map((val) => parseInt(val, 16)));
 
-const verifySignature = async (request: VercelRequest): Promise<{ valid: boolean; body: string }> => {
+const verifySignature = async (request: VercelRequest): Promise<boolean> => {
 	const signature = request.headers["x-signature-ed25519"] as string;
 	const timestamp = request.headers["x-signature-timestamp"];
-	const body = request.body;
 
 	const buf = await buffer(request);
 	const rawBody = buf.toString("utf8");
@@ -38,18 +37,18 @@ const verifySignature = async (request: VercelRequest): Promise<{ valid: boolean
 		hexToUint8Array(envConfig["BOT_PUBLIC"]),
 	);
 
-	return { valid, body };
+	return valid;
 };
 
 export default async (request: VercelRequest, response: VercelResponse) => {
-	const { valid, body } = await verifySignature(request);
+	const valid = await verifySignature(request);
 	if (!valid) {
 		response.status(401).send("Invalid request");
 		return;
 	}
 
 	const interaction: APIBaseInteraction<InteractionType, APIChatInputApplicationCommandInteractionData> =
-		JSON.parse(body);
+		request.body;
 	if (interaction.type === InteractionType.Ping) {
 		response.status(200).send({ type: InteractionType.Ping });
 	}
