@@ -1,5 +1,5 @@
 import nacl from "tweetnacl";
-import config from "../modules/env";
+import envConfig from "../modules/env";
 import commands from "../commands";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
@@ -7,6 +7,20 @@ import {
 	APIChatInputApplicationCommandInteractionData,
 	InteractionType,
 } from "discord-api-types/v10";
+import type { Readable } from "node:stream";
+
+export const config = {
+	api: { bodyParser: false },
+};
+
+const buffer = async (readable: Readable) => {
+	const chunks = [];
+	for await (const chunk of readable) {
+		chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+	}
+
+	return Buffer.concat(chunks);
+};
 
 const hexToUint8Array = (hex: string) => new Uint8Array(hex.match(/.{1,2}/g)!.map((val) => parseInt(val, 16)));
 
@@ -15,10 +29,13 @@ const verifySignature = async (request: VercelRequest): Promise<{ valid: boolean
 	const timestamp = request.headers["x-signature-timestamp"];
 	const body = request.body;
 
+	const buf = await buffer(request);
+	const rawBody = buf.toString("utf8");
+
 	const valid = nacl.sign.detached.verify(
-		new TextEncoder().encode(timestamp + body),
+		new TextEncoder().encode(timestamp + rawBody),
 		hexToUint8Array(signature),
-		hexToUint8Array(config["BOT_PUBLIC"]),
+		hexToUint8Array(envConfig["BOT_PUBLIC"]),
 	);
 
 	return { valid, body };
