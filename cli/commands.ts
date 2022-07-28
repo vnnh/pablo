@@ -1,8 +1,8 @@
 // @ts-nocheck deno
 
-//deno run --allow-write --allow-read --allow-net --allow-env ./cli/commands.ts
+//deno run --allow-all ./cli/commands.ts
 
-import config from "../modules/env.ts";
+import config from "../deno/env.ts";
 import {
 	ApplicationCommandOptionType,
 	ApplicationCommandPartial,
@@ -93,8 +93,8 @@ const applicationCommands: Array<ApplicationCommandPartial> = [
 						type: ApplicationCommandOptionType.STRING,
 					},
 					{
-						name: "degrees",
-						description: "degree to rotate",
+						name: "angle",
+						description: "degrees",
 						type: ApplicationCommandOptionType.NUMBER,
 					},
 				],

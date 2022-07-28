@@ -54,17 +54,27 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 	interaction: APIBaseInteraction<
 		InteractionType.ApplicationCommand,
 		Omit<InteractionData, "options"> &
-			NamedInteractionGroupOption<
-				"caption",
-				[
-					NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
-					NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
-					NamedInteractionOption<ApplicationCommandOptionType.String, "text">,
-					NamedInteractionOption<ApplicationCommandOptionType.Boolean, "overlay">,
-					NamedInteractionOption<ApplicationCommandOptionType.String, "position">,
-					NamedInteractionOption<ApplicationCommandOptionType.String, "color">,
-				]
-			>
+			(
+				| NamedInteractionGroupOption<
+						"caption",
+						[
+							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "text">,
+							NamedInteractionOption<ApplicationCommandOptionType.Boolean, "overlay">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "position">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "color">,
+						]
+				  >
+				| NamedInteractionGroupOption<
+						"rotate",
+						[
+							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
+							NamedInteractionOption<ApplicationCommandOptionType.Number, "angle">,
+						]
+				  >
+			)
 	>,
 ) => {
 	await fetch(`${api}/interactions/${interaction.id}/${interaction.token}/callback`, {
@@ -76,6 +86,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 	});
 
 	const subcommand = interaction.data!.options[0];
+
 	const source = getFromOptions(subcommand, "url") ?? getFromOptions(subcommand, "file");
 	if (!source)
 		return await editResponse(
@@ -99,95 +110,124 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
 		);
 
-	if (fontBuffer === undefined)
-		fontBuffer = readFileSync(join(resolve(process.cwd(), "static"), "Impact.ttf")).buffer;
+	let encoded: Uint8Array | undefined;
+	let ext: "gif" | "png" = "png";
+	if (subcommand.name === "caption") {
+		if (fontBuffer === undefined)
+			fontBuffer = readFileSync(join(resolve(process.cwd(), "static"), "Impact.ttf")).buffer;
 
-	const text = getFromOptions(subcommand, "text");
-	const isOverlay = getFromOptions(subcommand, "overlay")?.value ?? true;
-	const position = (getFromOptions(subcommand, "position")?.value ?? "top") as CaptionPosition;
-	const color = getFromOptions(subcommand, "color")?.value ?? "#fff | #000";
+		const text = getFromOptions(subcommand, "text");
+		const isOverlay = getFromOptions(subcommand, "overlay")?.value ?? true;
+		const position = (getFromOptions(subcommand, "position")?.value ?? "top") as CaptionPosition;
+		const color = getFromOptions(subcommand, "color")?.value ?? "#fff | #000";
 
-	let textColor = "";
-	let backgroundColor = "";
-	{
-		const textMatch = cleanHex(color.match(/(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})\s?\|?/)?.[1]);
-		const backgroundMatch = cleanHex(color.match(/\|\s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})/)?.[1]);
-		if (textMatch && !backgroundMatch) {
-			textColor = textMatch.length === 6 ? `${textMatch}ff` : textMatch;
-			backgroundColor = contrastColor(textColor);
-		} else if (backgroundMatch && !textMatch) {
-			backgroundColor = backgroundMatch.length === 6 ? `${backgroundMatch}ff` : backgroundMatch;
-			textColor = contrastColor(backgroundColor);
-		} else if (textMatch && backgroundMatch) {
-			textColor = textMatch.length === 6 ? `${textMatch}ff` : textMatch;
-			backgroundColor = backgroundMatch.length === 6 ? `${backgroundMatch}ff` : backgroundMatch;
-		}
-	}
-
-	if (!validateHex(textColor) || !validateHex(backgroundColor))
-		return await editResponse(
-			interaction,
-			JSON.stringify({
-				content: "> Invalid hex!",
-			} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
-		);
-
-	if (!text)
-		return await editResponse(
-			interaction,
-			JSON.stringify({
-				content: "> No caption text given!",
-			} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
-		);
-
-	const inputImage = await decode(Buffer.from(fileBuffer));
-	const textImage = await Image.renderText(Buffer.from(fontBuffer), 24, text.value, encodeHex(textColor), {
-		maxWidth: inputImage.width,
-		maxHeight: Infinity,
-		wrapStyle: "word",
-		verticalAlign: "center",
-		horizontalAlign: "center",
-		wrapHardBreaks: true,
-	});
-
-	const blankImage = new Image(
-		inputImage.width,
-		inputImage.height + (isOverlay || position === "center" ? 0 : textImage.height),
-	).fill(encodeHex(backgroundColor));
-
-	let encoded: Uint8Array;
-	if (inputImage instanceof GIF) {
-		for (const [i, v] of inputImage.entries()) {
-			inputImage[i] = Frame.from(
-				placeComposite(blankImage.clone(), v as unknown as Image, textImage, position, isOverlay),
+		let textColor = "";
+		let backgroundColor = "";
+		{
+			const textMatch = cleanHex(color.match(/(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})\s?\|?/)?.[1]);
+			const backgroundMatch = cleanHex(
+				color.match(/\|\s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})/)?.[1],
 			);
+			if (textMatch && !backgroundMatch) {
+				textColor = textMatch.length === 6 ? `${textMatch}ff` : textMatch;
+				backgroundColor = contrastColor(textColor);
+			} else if (backgroundMatch && !textMatch) {
+				backgroundColor = backgroundMatch.length === 6 ? `${backgroundMatch}ff` : backgroundMatch;
+				textColor = contrastColor(backgroundColor);
+			} else if (textMatch && backgroundMatch) {
+				textColor = textMatch.length === 6 ? `${textMatch}ff` : textMatch;
+				backgroundColor = backgroundMatch.length === 6 ? `${backgroundMatch}ff` : backgroundMatch;
+			}
 		}
 
-		encoded = await inputImage.encode(100);
-	} else {
-		encoded = await placeComposite(blankImage, inputImage, textImage, position, isOverlay).encode();
+		if (!validateHex(textColor) || !validateHex(backgroundColor))
+			return await editResponse(
+				interaction,
+				JSON.stringify({
+					content: "> Invalid hex!",
+				} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
+			);
+
+		if (!text)
+			return await editResponse(
+				interaction,
+				JSON.stringify({
+					content: "> No caption text given!",
+				} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
+			);
+
+		const inputImage = await decode(Buffer.from(fileBuffer));
+		const textImage = await Image.renderText(Buffer.from(fontBuffer), 24, text.value, encodeHex(textColor), {
+			maxWidth: inputImage.width,
+			maxHeight: Infinity,
+			wrapStyle: "word",
+			verticalAlign: "center",
+			horizontalAlign: "center",
+			wrapHardBreaks: true,
+		});
+
+		const blankImage = new Image(
+			inputImage.width,
+			inputImage.height + (isOverlay || position === "center" ? 0 : textImage.height),
+		).fill(encodeHex(backgroundColor));
+
+		if (inputImage instanceof GIF) {
+			for (const [i, v] of inputImage.entries()) {
+				inputImage[i] = Frame.from(
+					placeComposite(blankImage.clone(), v as unknown as Image, textImage, position, isOverlay),
+				);
+			}
+
+			encoded = await inputImage.encode(100);
+			ext = "gif";
+		} else {
+			encoded = await placeComposite(blankImage, inputImage, textImage, position, isOverlay).encode();
+		}
+	} else if (subcommand.name === "rotate") {
+		const angle = getFromOptions(subcommand, "angle")?.value;
+		if (angle === undefined)
+			return await editResponse(
+				interaction,
+				JSON.stringify({
+					content: "> No angle given!",
+				} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
+			);
+
+		const inputImage = await decode(Buffer.from(fileBuffer));
+		if (inputImage instanceof GIF) {
+			for (const [i, v] of inputImage.entries()) {
+				inputImage[i] = Frame.from((v as Frame).rotate(angle));
+			}
+
+			encoded = await inputImage.encode(100);
+			ext = "gif";
+		} else {
+			encoded = await inputImage.rotate(angle).encode();
+		}
 	}
 
-	const formData = new FormData();
+	if (encoded) {
+		const formData = new FormData();
 
-	const filename = `new.${inputImage instanceof GIF ? `gif` : `png`}`;
-	formData.append(
-		"payload_json",
-		JSON.stringify({
-			attachments: [
-				{
-					id: "0",
-					description: "modified image",
-					filename,
-				},
-			],
-		} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
-	);
-	formData.append("files[0]", Buffer.from(encoded.buffer), { filename });
+		const filename = `new.${ext}`;
+		formData.append(
+			"payload_json",
+			JSON.stringify({
+				attachments: [
+					{
+						id: "0",
+						description: "modified image",
+						filename,
+					},
+				],
+			} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
+		);
+		formData.append("files[0]", Buffer.from(encoded.buffer), { filename });
 
-	await fetch(`${api}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
-		method: "PATCH",
-		headers: formData.getHeaders(),
-		body: formData,
-	});
+		await fetch(`${api}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+			method: "PATCH",
+			headers: formData.getHeaders(),
+			body: formData,
+		});
+	}
 };
