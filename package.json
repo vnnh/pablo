@@ -19,11 +19,13 @@
 		"dotenv": "^16.0.1",
 		"form-data": "^4.0.0",
 		"imagescript": "github:matmen/ImageScript",
+		"math-expression-evaluator": "^1.4.0",
 		"node-fetch": "^2.6.7",
 		"tweetnacl": "^1.0.3"
 	},
 	"devDependencies": {
 		"@types/bad-words": "^3.0.1",
+		"@types/math-expression-evaluator": "^1.2.2",
 		"@types/node-fetch": "^2.6.1",
 		"@typescript-eslint/eslint-plugin": "^5.31.0",
 		"@typescript-eslint/parser": "^5.31.0",

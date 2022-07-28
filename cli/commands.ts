@@ -99,6 +99,28 @@ const applicationCommands: Array<ApplicationCommandPartial> = [
 					},
 				],
 			},
+			{
+				name: "round",
+				description: "round an image",
+				type: ApplicationCommandOptionType.SUB_COMMAND,
+				options: [
+					{
+						name: "file",
+						description: "input option 1",
+						type: ATTACHMENT,
+					},
+					{
+						name: "url",
+						description: "input option 2",
+						type: ApplicationCommandOptionType.STRING,
+					},
+					{
+						name: "radius",
+						description: "corner radius (w=width | h=height)",
+						type: ApplicationCommandOptionType.STRING,
+					},
+				],
+			},
 		],
 	},
 ];

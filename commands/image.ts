@@ -19,6 +19,7 @@ import { decode, Frame, GIF, Image } from "imagescript";
 import encodeHex, { cleanHex } from "../modules/encodeHex";
 import FormData from "form-data";
 import fetch from "node-fetch";
+import Mexp from "math-expression-evaluator";
 
 type CaptionPosition = "top" | "center" | "bottom";
 
@@ -72,6 +73,14 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
 							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
 							NamedInteractionOption<ApplicationCommandOptionType.Number, "angle">,
+						]
+				  >
+				| NamedInteractionGroupOption<
+						"round",
+						[
+							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "radius">,
 						]
 				  >
 			)
@@ -203,6 +212,49 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			ext = "gif";
 		} else {
 			encoded = await inputImage.rotate(angle).encode();
+		}
+	} else if (subcommand.name === "round") {
+		const radius = getFromOptions(subcommand, "radius")?.value;
+		if (radius === undefined)
+			return await editResponse(
+				interaction,
+				JSON.stringify({
+					content: "> No radius given!",
+				} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
+			);
+
+		const inputImage = await decode(Buffer.from(fileBuffer));
+
+		let calculatedRadius: number | undefined;
+		try {
+			calculatedRadius = Mexp.eval(
+				radius,
+				[
+					{ type: 3, token: "w", show: "w", value: "w" },
+					{ type: 3, token: "h", show: "h", value: "h" },
+				],
+				{ w: inputImage.width, h: inputImage.height },
+			) as unknown as number;
+		} catch (e) {
+			return await editResponse(
+				interaction,
+				JSON.stringify({
+					content: `> ${(e as { message: string }).message}`,
+				} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
+			);
+		}
+
+		if (calculatedRadius === undefined) return;
+
+		if (inputImage instanceof GIF) {
+			for (const [i, v] of inputImage.entries()) {
+				inputImage[i] = Frame.from((v as Frame).roundCorners(calculatedRadius));
+			}
+
+			encoded = await inputImage.encode(100);
+			ext = "gif";
+		} else {
+			encoded = await inputImage.roundCorners(calculatedRadius).encode();
 		}
 	}
 
