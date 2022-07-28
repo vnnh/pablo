@@ -105,8 +105,8 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 	let textColor = "";
 	let backgroundColor = "";
 	{
-		const textMatch = color.match(/(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6})\s?\|/);
-		const backgroundMatch = color.match(/\|\s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6})/);
+		const textMatch = color.match(/(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6})\s?\|?/);
+		const backgroundMatch = color.match(/\|?\s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6})/);
 		if (textMatch && !backgroundMatch) {
 			textColor = textMatch[1].length === 6 ? `${textMatch[1]}ff` : textMatch[1];
 			backgroundColor = contrastColor(textColor);
