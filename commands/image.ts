@@ -119,6 +119,8 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 		}
 	}
 
+	console.log(`${color} > ${textColor} | ${backgroundColor}`);
+
 	if (!validateHex(textColor) || !validateHex(backgroundColor))
 		return await editResponse(
 			interaction,
