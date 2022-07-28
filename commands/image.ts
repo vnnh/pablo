@@ -117,6 +117,9 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			textColor = textMatch[1].length === 6 ? `${textMatch[1]}ff` : textMatch[1];
 			backgroundColor = backgroundMatch[1].length === 6 ? `${backgroundMatch[1]}ff` : backgroundMatch[1];
 		}
+
+		textColor = textColor.replace(/^#/, "");
+		backgroundColor = backgroundColor.replace(/^#/, "");
 	}
 
 	if (!validateHex(textColor) || !validateHex(backgroundColor))
