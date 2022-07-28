@@ -183,6 +183,6 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 	await fetch(`${api}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
 		method: "PATCH",
 		headers: formData.getHeaders(),
-		body: formData,
+		body: formData.getBuffer(),
 	});
 };
