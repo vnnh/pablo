@@ -1,4 +1,9 @@
 {
+	"functions": {
+		"api/interaction.ts": {
+			"includeFiles": "static/Impact.ttf"
+		}
+	},
 	"github": {
 		"silent": true
 	}

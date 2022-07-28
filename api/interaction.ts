@@ -34,7 +34,7 @@ const verifySignature = async (request: VercelRequest): Promise<boolean> => {
 	const valid = nacl.sign.detached.verify(
 		new TextEncoder().encode(timestamp + rawBody),
 		hexToUint8Array(signature),
-		hexToUint8Array(envConfig["BOT_PUBLIC"]),
+		hexToUint8Array(envConfig["BOT_PUBLIC"]!),
 	);
 
 	return valid;
@@ -49,7 +49,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
 	if (interaction.type === InteractionType.Ping) return response.status(200).send({ type: InteractionType.Ping });
 
 	if (interaction.type === InteractionType.ApplicationCommand) {
-		const handler = commands.get(interaction.data.name);
+		const handler = commands.get(interaction.data!.name);
 
 		const ret = await handler!(
 			interaction as APIBaseInteraction<

@@ -3,22 +3,26 @@ import { api } from "../constant";
 import {
 	APIApplicationCommandInteractionDataAttachmentOption,
 	APIApplicationCommandInteractionDataStringOption,
-	APIAttachment,
 	APIChatInputApplicationCommandInteraction,
 	APIMessage,
+	ApplicationCommandOptionType,
 } from "discord-api-types/v10";
 
-export const getFileInput = (interaction: APIChatInputApplicationCommandInteraction): string | APIAttachment => {
-	return (
-		interaction.data.options.find((v) => /(?:file)|(?:url)/.test(v.name)) as
-			| APIApplicationCommandInteractionDataAttachmentOption
-			| APIApplicationCommandInteractionDataStringOption
-			| undefined
-	)?.value;
+export const getFileInput = (interaction: APIChatInputApplicationCommandInteraction) => {
+	const option = interaction.data.options!.find((v) => /(?:file)|(?:url)/.test(v.name)) as
+		| APIApplicationCommandInteractionDataAttachmentOption
+		| APIApplicationCommandInteractionDataStringOption
+		| undefined;
+
+	if (option?.type === ApplicationCommandOptionType.Attachment) {
+		return interaction.data.resolved?.attachments?.[option.value].url;
+	} else if (option?.type === ApplicationCommandOptionType.String) {
+		return option.value;
+	}
 };
 
-export const getFileBuffer = async (fileInput: ReturnType<typeof getFileInput>, channelId: string) => {
-	let messageBuffer;
+export const getFileBuffer = async (fileInput: string, channelId: string) => {
+	let messageBuffer: ArrayBuffer | undefined;
 
 	let messageId;
 
@@ -40,8 +44,6 @@ export const getFileBuffer = async (fileInput: ReturnType<typeof getFileInput>, 
 		} else {
 			messageId = fileInput;
 		}
-	} else {
-		messageBuffer = await fetch(fileInput.url).then((v) => v.arrayBuffer());
 	}
 
 	if (messageId) {

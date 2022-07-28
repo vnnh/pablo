@@ -31,12 +31,12 @@ export default async (
 ) => {
 	let text = "";
 	const messageOption = getFromOptions(interaction.data, "message");
-	if (messageOption.result === "success") text = messageOption.option.value;
+	if (messageOption) text = messageOption.value;
 	text = text.replace("@everyone", "");
 	text = filter.clean(text);
 
 	const tinyOption = getFromOptions(interaction.data, "tiny");
-	if (tinyOption.result === "success" && tinyOption.option.value === true)
+	if (tinyOption?.value === true)
 		text = text
 			.split("")
 			.map((a) => tinyCharacters.get(a) ?? a)
