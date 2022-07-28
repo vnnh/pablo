@@ -85,7 +85,12 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
 		);
 
-	const fileBuffer = await getFileBuffer(source.value, interaction.channel_id!);
+	const fileBuffer = await getFileBuffer(
+		source.type === ApplicationCommandOptionType.Attachment
+			? interaction.data?.resolved?.attachments?.[source.value]?.url
+			: source.value,
+		interaction.channel_id!,
+	);
 	if (!(fileBuffer instanceof ArrayBuffer))
 		return await editResponse(
 			interaction,

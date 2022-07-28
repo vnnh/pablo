@@ -1,50 +1,31 @@
 import { authHeader } from "./env";
 import { api } from "../constant";
-import {
-	APIApplicationCommandInteractionDataAttachmentOption,
-	APIApplicationCommandInteractionDataStringOption,
-	APIChatInputApplicationCommandInteraction,
-	APIMessage,
-	ApplicationCommandOptionType,
-} from "discord-api-types/v10";
+import { APIMessage } from "discord-api-types/v10";
 import fetch from "node-fetch";
 
-export const getFileInput = (interaction: APIChatInputApplicationCommandInteraction) => {
-	const option = interaction.data.options!.find((v) => /(?:file)|(?:url)/.test(v.name)) as
-		| APIApplicationCommandInteractionDataAttachmentOption
-		| APIApplicationCommandInteractionDataStringOption
-		| undefined;
+export const getFileBuffer = async (fileInput: string | undefined, channelId: string) => {
+	if (fileInput === undefined) return "> Error retrieving input";
 
-	if (option?.type === ApplicationCommandOptionType.Attachment) {
-		return interaction.data.resolved?.attachments?.[option.value].url;
-	} else if (option?.type === ApplicationCommandOptionType.String) {
-		return option.value;
-	}
-};
-
-export const getFileBuffer = async (fileInput: string, channelId: string) => {
 	let messageBuffer: ArrayBuffer | undefined;
 
 	let messageId;
 
-	if (typeof fileInput === "string") {
-		if (fileInput.match("discord.com")) {
-			messageId = fileInput.match(/\/(\d+)\/(\d+)$/);
-			if (!messageId) {
-				return "> Message not found!";
-			}
-
-			channelId = messageId[1];
-			messageId = messageId[2];
-		} else if (fileInput.match("http")) {
-			if (fileInput.match("/tenor") || fileInput.match("/gyazo")) {
-				messageBuffer = await fetch(`${fileInput}.gif`).then((v) => v.arrayBuffer());
-			} else {
-				messageBuffer = await fetch(fileInput).then((v) => v.arrayBuffer());
-			}
-		} else {
-			messageId = fileInput;
+	if (fileInput.match("discord.com")) {
+		messageId = fileInput.match(/\/(\d+)\/(\d+)$/);
+		if (!messageId) {
+			return "> Message not found!";
 		}
+
+		channelId = messageId[1];
+		messageId = messageId[2];
+	} else if (fileInput.match("http")) {
+		if (fileInput.match("/tenor") || fileInput.match("/gyazo")) {
+			messageBuffer = await fetch(`${fileInput}.gif`).then((v) => v.arrayBuffer());
+		} else {
+			messageBuffer = await fetch(fileInput).then((v) => v.arrayBuffer());
+		}
+	} else {
+		messageId = fileInput;
 	}
 
 	if (messageId) {
