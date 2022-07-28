@@ -1,6 +1,7 @@
 import nacl from "tweetnacl";
 import envConfig from "../modules/env";
 import commands from "../commands";
+import { TextEncoder } from "util";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
 	APIBaseInteraction,

@@ -7,6 +7,7 @@ import {
 	APIMessage,
 	ApplicationCommandOptionType,
 } from "discord-api-types/v10";
+import fetch from "node-fetch";
 
 export const getFileInput = (interaction: APIChatInputApplicationCommandInteraction) => {
 	const option = interaction.data.options!.find((v) => /(?:file)|(?:url)/.test(v.name)) as
