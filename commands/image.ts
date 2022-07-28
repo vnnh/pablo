@@ -100,13 +100,13 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 	const text = getFromOptions(subcommand, "text");
 	const isOverlay = getFromOptions(subcommand, "overlay")?.value ?? true;
 	const position = (getFromOptions(subcommand, "position")?.value ?? "top") as CaptionPosition;
-	const color = getFromOptions(subcommand, "color")?.value ?? "#ffffffff | #000000ff";
+	const color = getFromOptions(subcommand, "color")?.value ?? "#fff | #000";
 
 	let textColor = "";
 	let backgroundColor = "";
 	{
 		const textMatch = cleanHex(color.match(/(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})\s?\|?/)?.[1]);
-		const backgroundMatch = cleanHex(color.match(/\|?\s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})/)?.[1]);
+		const backgroundMatch = cleanHex(color.match(/\|s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})/)?.[1]);
 		if (textMatch && !backgroundMatch) {
 			textColor = textMatch.length === 6 ? `${textMatch}ff` : textMatch;
 			backgroundColor = contrastColor(textColor);
