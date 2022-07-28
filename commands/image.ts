@@ -16,7 +16,7 @@ import getFromOptions from "../modules/getFromOptions";
 import contrastColor from "../modules/contrastColor";
 import validateHex from "../modules/validateHex";
 import { decode, Frame, GIF, Image } from "imagescript";
-import encodeHex from "../modules/encodeHex";
+import encodeHex, { cleanHex } from "../modules/encodeHex";
 import FormData from "form-data";
 import fetch from "node-fetch";
 
@@ -105,21 +105,18 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 	let textColor = "";
 	let backgroundColor = "";
 	{
-		const textMatch = color.match(/(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6})\s?\|?/);
-		const backgroundMatch = color.match(/\|?\s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6})/);
+		const textMatch = cleanHex(color.match(/(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})\s?\|?/)?.[1]);
+		const backgroundMatch = cleanHex(color.match(/\|?\s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})/)?.[1]);
 		if (textMatch && !backgroundMatch) {
-			textColor = textMatch[1].length === 6 ? `${textMatch[1]}ff` : textMatch[1];
+			textColor = textMatch.length === 6 ? `${textMatch}ff` : textMatch;
 			backgroundColor = contrastColor(textColor);
 		} else if (backgroundMatch && !textMatch) {
-			backgroundColor = backgroundMatch[1].length === 6 ? `${backgroundMatch[1]}ff` : backgroundMatch[1];
+			backgroundColor = backgroundMatch.length === 6 ? `${backgroundMatch}ff` : backgroundMatch;
 			textColor = contrastColor(backgroundColor);
 		} else if (textMatch && backgroundMatch) {
-			textColor = textMatch[1].length === 6 ? `${textMatch[1]}ff` : textMatch[1];
-			backgroundColor = backgroundMatch[1].length === 6 ? `${backgroundMatch[1]}ff` : backgroundMatch[1];
+			textColor = textMatch.length === 6 ? `${textMatch}ff` : textMatch;
+			backgroundColor = backgroundMatch.length === 6 ? `${backgroundMatch}ff` : backgroundMatch;
 		}
-
-		textColor = textColor.replace(/^#/, "");
-		backgroundColor = backgroundColor.replace(/^#/, "");
 	}
 
 	if (!validateHex(textColor) || !validateHex(backgroundColor))
