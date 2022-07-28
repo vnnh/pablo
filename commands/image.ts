@@ -158,7 +158,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			);
 		}
 
-		encoded = await inputImage.encode();
+		encoded = await inputImage.encode(100);
 	} else {
 		encoded = await placeComposite(blankImage, inputImage, textImage, position, isOverlay).encode();
 	}
