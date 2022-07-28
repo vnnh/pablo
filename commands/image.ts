@@ -145,6 +145,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 		wrapHardBreaks: true,
 	});
 
+	console.log(color, backgroundColor);
 	const blankImage = new Image(
 		inputImage.width,
 		inputImage.height + (isOverlay || position === "center" ? 0 : textImage.height),

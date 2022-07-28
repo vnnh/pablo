@@ -60,7 +60,7 @@ export const getFileBuffer = async (fileInput: string, channelId: string) => {
 		if (channelMessageResponse) {
 			const channelMessage = (await channelMessageResponse.json()) as APIMessage;
 
-			if (channelMessage.attachments.length === 0) {
+			if (!channelMessage.attachments || channelMessage.attachments.length === 0) {
 				if (channelMessage.content.match("/tenor") || channelMessage.content.match("/gyazo")) {
 					messageBuffer = await fetch(`${channelMessage.content}.gif`).then((v) => v.arrayBuffer());
 				} else if (
