@@ -106,7 +106,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 	let backgroundColor = "";
 	{
 		const textMatch = cleanHex(color.match(/(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})\s?\|?/)?.[1]);
-		const backgroundMatch = cleanHex(color.match(/\|s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})/)?.[1]);
+		const backgroundMatch = cleanHex(color.match(/\|\s?(#[0-9A-Fa-f]{8}|#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})/)?.[1]);
 		if (textMatch && !backgroundMatch) {
 			textColor = textMatch.length === 6 ? `${textMatch}ff` : textMatch;
 			backgroundColor = contrastColor(textColor);
@@ -145,7 +145,6 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 		wrapHardBreaks: true,
 	});
 
-	console.log(color, backgroundColor);
 	const blankImage = new Image(
 		inputImage.width,
 		inputImage.height + (isOverlay || position === "center" ? 0 : textImage.height),
