@@ -11,5 +11,5 @@ export const cleanHex = <Hex extends unknown>(hex: Hex): Hex => {
 
 export default (str: string) => {
 	const match = str.match(/^[A-Fa-f0-9]{8}/);
-	return parseInt(match?.[1] ?? "ffffffff", 16);
+	return parseInt(match?.[0] ?? "ffffffff", 16);
 };
