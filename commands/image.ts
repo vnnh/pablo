@@ -178,7 +178,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			],
 		} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
 	);
-	formData.append("files[0]", encoded.buffer, { filename });
+	formData.append("files[0]", Buffer.from(encoded.buffer), { filename });
 
 	await fetch(`${api}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
 		method: "PATCH",
