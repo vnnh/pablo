@@ -11,6 +11,6 @@ const map = new Map<
 >([
 	["say", say],
 	["image", image],
-]);
+] as never);
 
 export default map;
