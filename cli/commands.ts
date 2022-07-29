@@ -121,6 +121,69 @@ const applicationCommands: Array<ApplicationCommandPartial> = [
 					},
 				],
 			},
+			{
+				name: "invert",
+				description: "invert an attribute of an image",
+				type: ApplicationCommandOptionType.SUB_COMMAND,
+				options: [
+					{
+						name: "file",
+						description: "input option 1",
+						type: ATTACHMENT,
+					},
+					{
+						name: "url",
+						description: "input option 2",
+						type: ApplicationCommandOptionType.STRING,
+					},
+					{
+						name: "attribute",
+						description: "image attribute (hue = color, saturation = intensity, value = lightness)",
+						type: ApplicationCommandOptionType.STRING,
+						choices: [
+							{ name: "color", value: "color" },
+							{ name: "hue", value: "hue" },
+							{ name: "saturation", value: "saturation" },
+							{ name: "value", value: "value" },
+						],
+					},
+				],
+			},
+			{
+				name: "saturate",
+				description: "saturate an image",
+				type: ApplicationCommandOptionType.SUB_COMMAND,
+				options: [
+					{
+						name: "file",
+						description: "input option 1",
+						type: ATTACHMENT,
+					},
+					{
+						name: "url",
+						description: "input option 2",
+						type: ApplicationCommandOptionType.STRING,
+					},
+					{
+						name: "saturation",
+						description: "0-1",
+						type: ApplicationCommandOptionType.NUMBER,
+						minValue: 0,
+						maxValue: 1,
+					},
+					{
+						name: "channel",
+						description: "color channel",
+						type: ApplicationCommandOptionType.STRING,
+						choices: [
+							{ name: "all", value: "all" },
+							{ name: "red", value: "red" },
+							{ name: "green", value: "green" },
+							{ name: "blue", value: "blue" },
+						],
+					},
+				],
+			},
 		],
 	},
 ];

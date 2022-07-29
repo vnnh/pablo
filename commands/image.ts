@@ -22,6 +22,8 @@ import fetch from "node-fetch";
 import Mexp from "math-expression-evaluator";
 
 type CaptionPosition = "top" | "center" | "bottom";
+type InvertAttribute = "color" | "hue" | "saturation" | "value";
+type SaturateChannel = "all" | "red" | "green" | "blue";
 
 let fontBuffer: ArrayBufferLike = undefined!;
 
@@ -47,6 +49,32 @@ const placeComposite = (main: Image, input: Image, text: Image, position: Captio
 		main.composite(input, 0, 0).composite(text, 0, input.height / 2 - text.height / 2);
 	}
 	return main;
+};
+
+const invertImage = (image: Image, attr: InvertAttribute) => {
+	switch (attr) {
+		case "color":
+			return image.invert();
+		case "hue":
+			return image.invertHue();
+		case "saturation":
+			return image.invertSaturation();
+		case "value":
+			return image.invertValue();
+	}
+};
+
+const saturateImage = (image: Image, value: number, channel: SaturateChannel) => {
+	switch (channel) {
+		case "all":
+			return image.saturation(value);
+		case "red":
+			return image.red(value);
+		case "green":
+			return image.green(value);
+		case "blue":
+			return image.blue(value);
+	}
 };
 
 //interaction.data.name: GROUP
@@ -81,6 +109,23 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
 							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
 							NamedInteractionOption<ApplicationCommandOptionType.String, "radius">,
+						]
+				  >
+				| NamedInteractionGroupOption<
+						"invert",
+						[
+							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "attribute">,
+						]
+				  >
+				| NamedInteractionGroupOption<
+						"saturate",
+						[
+							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
+							NamedInteractionOption<ApplicationCommandOptionType.Number, "saturation">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "channel">,
 						]
 				  >
 			)
@@ -255,6 +300,42 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			ext = "gif";
 		} else {
 			encoded = await inputImage.roundCorners(calculatedRadius).encode();
+		}
+	} else if (subcommand.name === "invert") {
+		const attr = (getFromOptions(subcommand, "attribute")?.value ?? "color") as InvertAttribute;
+
+		const inputImage = await decode(Buffer.from(fileBuffer));
+		if (inputImage instanceof GIF) {
+			for (const [i, v] of inputImage.entries()) {
+				inputImage[i] = Frame.from(invertImage(v, attr));
+			}
+
+			encoded = await inputImage.encode(100);
+			ext = "gif";
+		} else {
+			encoded = await invertImage(inputImage, attr).encode();
+		}
+	} else if (subcommand.name === "saturate") {
+		const saturationValue = getFromOptions(subcommand, "saturation")?.value;
+		if (saturationValue === undefined)
+			return await editResponse(
+				interaction,
+				JSON.stringify({
+					content: "> No radius given!",
+				} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
+			);
+
+		const channel = (getFromOptions(subcommand, "channel")?.value ?? "all") as SaturateChannel;
+		const inputImage = await decode(Buffer.from(fileBuffer));
+		if (inputImage instanceof GIF) {
+			for (const [i, v] of inputImage.entries()) {
+				inputImage[i] = Frame.from(saturateImage(v, saturationValue, channel));
+			}
+
+			encoded = await inputImage.encode(100);
+			ext = "gif";
+		} else {
+			encoded = await saturateImage(inputImage, saturationValue, channel).encode();
 		}
 	}
 
