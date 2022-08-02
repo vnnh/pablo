@@ -20,13 +20,11 @@ const applicationCommands: Array<ApplicationCommandPartial> = [
 			{
 				name: "message",
 				description: "the message",
-				required: true,
 				type: ApplicationCommandOptionType.STRING,
 			},
 			{
 				name: "tiny",
 				description: "use tiny characters",
-				required: false,
 				type: ApplicationCommandOptionType.BOOLEAN,
 			},
 			{
