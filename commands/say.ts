@@ -21,10 +21,11 @@ filter.removeWords("balls", "ball");
 export default async (
 	interaction: APIBaseInteraction<
 		InteractionType.ApplicationCommand,
-		InteractionData & {
+		Omit<InteractionData, "options"> & {
 			options: [
 				NamedInteractionOption<ApplicationCommandOptionType.String, "message">,
 				NamedInteractionOption<ApplicationCommandOptionType.Boolean, "tiny">,
+				NamedInteractionOption<ApplicationCommandOptionType.Attachment, "attachment">,
 			];
 		}
 	>,
@@ -42,6 +43,9 @@ export default async (
 			.map((a) => tinyCharacters.get(a) ?? a)
 			.join("");
 
+	const attachmentOption = getFromOptions(interaction.data, "attachment");
+	const attachmentObject = interaction.data?.resolved?.attachments?.[attachmentOption?.value ?? ""];
+
 	await fetch(`${api}/interactions/${interaction.id}/${interaction.token}/callback`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -54,6 +58,18 @@ export default async (
 	await fetch(`${api}/channels/${interaction.channel_id}/messages`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", ...authHeader },
-		body: JSON.stringify({ content: text } as RESTPostAPIChannelMessageJSONBody),
+		body: JSON.stringify({
+			content: text,
+			attachments: attachmentObject
+				? [
+						{
+							id: "0",
+							filename: attachmentObject.filename,
+							description: attachmentObject.description,
+							url: attachmentObject.url,
+						},
+				  ]
+				: undefined,
+		} as RESTPostAPIChannelMessageJSONBody),
 	});
 };

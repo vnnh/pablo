@@ -29,6 +29,11 @@ const applicationCommands: Array<ApplicationCommandPartial> = [
 				required: false,
 				type: ApplicationCommandOptionType.BOOLEAN,
 			},
+			{
+				name: "attachment",
+				description: "input option",
+				type: ATTACHMENT,
+			},
 		],
 	},
 	{

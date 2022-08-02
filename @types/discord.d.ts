@@ -10,6 +10,7 @@ import {
 	APIApplicationCommandInteractionDataSubcommandGroupOption,
 	APIApplicationCommandInteractionDataSubcommandOption,
 	APIApplicationCommandInteractionDataUserOption,
+	APIChatInputApplicationCommandInteractionData,
 	ApplicationCommandOptionType,
 } from "discord-api-types/v10";
 
