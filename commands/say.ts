@@ -14,6 +14,7 @@ import { authHeader } from "../modules/env";
 import fetch from "node-fetch";
 import { InteractionData, NamedInteractionOption } from "../@types/discord";
 import getFromOptions from "../modules/getFromOptions";
+import FormData from "form-data";
 
 const filter = new badwords({ placeHolder: "#" });
 filter.removeWords("balls", "ball");
@@ -55,21 +56,36 @@ export default async (
 		} as APIInteractionResponse),
 	});
 
-	await fetch(`${api}/channels/${interaction.channel_id}/messages`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...authHeader },
-		body: JSON.stringify({
-			content: text,
-			attachments: attachmentObject
-				? [
-						{
-							id: "0",
-							filename: attachmentObject.filename,
-							description: attachmentObject.description,
-							url: attachmentObject.url,
-						},
-				  ]
-				: undefined,
-		} as RESTPostAPIChannelMessageJSONBody),
-	});
+	if (!attachmentObject) {
+		await fetch(`${api}/channels/${interaction.channel_id}/messages`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...authHeader },
+			body: JSON.stringify({ content: text } as RESTPostAPIChannelMessageJSONBody),
+		});
+	} else {
+		const attachmentBuffer = await fetch(attachmentObject.url).then((v) => v.arrayBuffer());
+
+		const formData = new FormData();
+
+		formData.append(
+			"payload_json",
+			JSON.stringify({
+				content: text,
+				attachments: [
+					{
+						id: "0",
+						filename: attachmentObject.filename,
+						description: attachmentObject.description,
+					},
+				],
+			} as RESTPostAPIChannelMessageJSONBody),
+		);
+		formData.append("files[0]", Buffer.from(attachmentBuffer), { filename: attachmentObject.filename });
+
+		await fetch(`${api}/channels/${interaction.channel_id}/messages`, {
+			method: "PATCH",
+			headers: { ...authHeader, ...formData.getHeaders() },
+			body: formData,
+		});
+	}
 };
