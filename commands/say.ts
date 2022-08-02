@@ -83,7 +83,7 @@ export default async (
 		formData.append("files[0]", Buffer.from(attachmentBuffer), { filename: attachmentObject.filename });
 
 		await fetch(`${api}/channels/${interaction.channel_id}/messages`, {
-			method: "PATCH",
+			method: "POST",
 			headers: { ...authHeader, ...formData.getHeaders() },
 			body: formData,
 		});
