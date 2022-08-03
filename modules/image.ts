@@ -11,7 +11,7 @@ export const getFileBuffer = async (fileInput: string | undefined, channelId: st
 	let messageId;
 
 	if (fileInput.match("discord.com")) {
-		messageId = fileInput.match(/\/(\d+)\/(\d+)\/(\d+)$/) ?? fileInput.match(/\/(\d+)\/(\d+)$/);
+		messageId = fileInput.match(/\/(\d+)\/(\d+)\/(\d+)$/) || fileInput.match(/\/(\d+)\/(\d+)$/);
 		if (!messageId) {
 			return "> Message not found!";
 		}
