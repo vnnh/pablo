@@ -43,7 +43,6 @@ export const getFileBuffer = async (fileInput: string | undefined, channelId: st
 			if ("message" in channelMessage) return `> ${(channelMessage as unknown as { message: string }).message}`;
 
 			if (!channelMessage.attachments || channelMessage.attachments.length === 0) {
-				console.log(JSON.stringify(channelMessage));
 				if (
 					channelMessage.content.match("tenor.com") ||
 					channelMessage.content.match("/tenor") ||
