@@ -11,7 +11,7 @@ export const getFileBuffer = async (fileInput: string | undefined, channelId: st
 	let messageId;
 
 	if (fileInput.match("discord.com")) {
-		messageId = fileInput.match(/\/(\d+)\/(\d+)\/(\d+)$/) ?? fileInput.match(/\/(\d+)\/(\d+)$/);
+		messageId = fileInput.match(/\/(\d+)\/(\d+)$/);
 		if (!messageId) {
 			return "> Message not found!";
 		}
@@ -24,7 +24,7 @@ export const getFileBuffer = async (fileInput: string | undefined, channelId: st
 		} else {
 			messageBuffer = await fetch(fileInput).then((v) => v.arrayBuffer());
 		}
-	} else {
+	} else if (fileInput.match(/^(\d+)$/)) {
 		messageId = fileInput;
 	}
 
@@ -40,10 +40,10 @@ export const getFileBuffer = async (fileInput: string | undefined, channelId: st
 
 		if (channelMessageResponse) {
 			const channelMessage = (await channelMessageResponse.json()) as APIMessage;
+			if ("message" in channelMessage) return `> ${(channelMessage as unknown as { message: string }).message}`;
 
 			if (!channelMessage.attachments || channelMessage.attachments.length === 0) {
-				console.log(JSON.stringify(channelMessage));
-				if (channelMessage.content.match("/tenor") || channelMessage.content.match("/gyazo")) {
+				if (channelMessage.content.match("tenor.com") || channelMessage.content.match("/tenor") || channelMessage.content.match("gyazo.com") || channelMessage.content.match("/gyazo")) {
 					messageBuffer = await fetch(`${channelMessage.content}.gif`).then((v) => v.arrayBuffer());
 				} else if (
 					channelMessage.content.match("media.discord") ||
