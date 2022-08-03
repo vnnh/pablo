@@ -11,7 +11,7 @@ export const getFileBuffer = async (fileInput: string | undefined, channelId: st
 	let messageId;
 
 	if (fileInput.match("discord.com")) {
-		messageId = fileInput.match(/\/(\d+)\/(\d+)\/(\d+)$/) || fileInput.match(/\/(\d+)\/(\d+)$/);
+		messageId = fileInput.match(/\/(\d+)\/(\d+)\/(\d+)$/) ?? fileInput.match(/\/(\d+)\/(\d+)$/);
 		if (!messageId) {
 			return "> Message not found!";
 		}
@@ -42,6 +42,7 @@ export const getFileBuffer = async (fileInput: string | undefined, channelId: st
 			const channelMessage = (await channelMessageResponse.json()) as APIMessage;
 
 			if (!channelMessage.attachments || channelMessage.attachments.length === 0) {
+				console.log(JSON.stringify(channelMessage));
 				if (channelMessage.content.match("/tenor") || channelMessage.content.match("/gyazo")) {
 					messageBuffer = await fetch(`${channelMessage.content}.gif`).then((v) => v.arrayBuffer());
 				} else if (
