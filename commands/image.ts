@@ -229,6 +229,10 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			for (const [i, v] of inputImage.entries()) {
 				inputImage[i] = Frame.from(
 					placeComposite(blankImage.clone(), v as unknown as Image, textImage, position, isOverlay),
+					undefined,
+					undefined,
+					undefined,
+					Frame.DISPOSAL_BACKGROUND,
 				);
 			}
 
@@ -250,7 +254,13 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 		const inputImage = await decode(Buffer.from(fileBuffer));
 		if (inputImage instanceof GIF) {
 			for (const [i, v] of inputImage.entries()) {
-				inputImage[i] = Frame.from((v as Frame).rotate(angle));
+				inputImage[i] = Frame.from(
+					(v as Frame).rotate(angle),
+					undefined,
+					undefined,
+					undefined,
+					Frame.DISPOSAL_BACKGROUND,
+				);
 			}
 
 			encoded = await inputImage.encode(100);
@@ -293,7 +303,13 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 
 		if (inputImage instanceof GIF) {
 			for (const [i, v] of inputImage.entries()) {
-				inputImage[i] = Frame.from((v as Frame).roundCorners(calculatedRadius));
+				inputImage[i] = Frame.from(
+					(v as Frame).roundCorners(calculatedRadius),
+					undefined,
+					undefined,
+					undefined,
+					Frame.DISPOSAL_BACKGROUND,
+				);
 			}
 
 			encoded = await inputImage.encode(100);
@@ -307,7 +323,13 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 		const inputImage = await decode(Buffer.from(fileBuffer));
 		if (inputImage instanceof GIF) {
 			for (const [i, v] of inputImage.entries()) {
-				inputImage[i] = Frame.from(invertImage(v, attr));
+				inputImage[i] = Frame.from(
+					invertImage(v, attr),
+					undefined,
+					undefined,
+					undefined,
+					Frame.DISPOSAL_BACKGROUND,
+				);
 			}
 
 			encoded = await inputImage.encode(100);
@@ -329,7 +351,13 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 		const inputImage = await decode(Buffer.from(fileBuffer));
 		if (inputImage instanceof GIF) {
 			for (const [i, v] of inputImage.entries()) {
-				inputImage[i] = Frame.from(saturateImage(v, saturationValue, channel));
+				inputImage[i] = Frame.from(
+					saturateImage(v, saturationValue, channel),
+					undefined,
+					undefined,
+					undefined,
+					Frame.DISPOSAL_BACKGROUND,
+				);
 			}
 
 			encoded = await inputImage.encode(100);
