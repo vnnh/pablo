@@ -31,6 +31,7 @@ let cachedBuffers: Partial<{
 	shutterstock: Buffer;
 	getty: Buffer;
 	sample: Buffer;
+	bandicam: Buffer;
 }> = {};
 
 const editResponse = async (
@@ -109,7 +110,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
 							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
 							Omit<NamedInteractionOption<ApplicationCommandOptionType.String, "type">, "value"> & {
-								value: "getty" | "shutterstock" | "sample";
+								value: "getty" | "shutterstock" | "sample" | "bandicam";
 							},
 						]
 				  >
@@ -279,6 +280,22 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			watermarkOverlay = ((await decode(cachedBuffers[watermarkType]!)) as Image).resize(
 				inputImage.width >= inputImage.height ? inputImage.width : Image.RESIZE_AUTO,
 				inputImage.height >= inputImage.width ? inputImage.height : Image.RESIZE_AUTO,
+			);
+		} else if (watermarkType === "bandicam") {
+			if (cachedBuffers[watermarkType] === undefined)
+				cachedBuffers[watermarkType] = Buffer.from(
+					readFileSync(join(resolve(process.cwd(), "static"), `${watermarkType}.png`)).buffer,
+				);
+
+			let watermark = (await decode(cachedBuffers[watermarkType]!)) as Image;
+			if (inputImage.width < watermark.width) {
+				watermark = watermark.resize(inputImage.width, Image.RESIZE_AUTO);
+			}
+
+			watermarkOverlay = new Image(inputImage.width, inputImage.height).composite(
+				watermark,
+				inputImage.width / 2 - watermark.width / 2,
+				0,
 			);
 		} else {
 			watermarkOverlay = new Image(inputImage.width, inputImage.height);
