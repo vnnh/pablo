@@ -282,7 +282,8 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			);
 		} else {
 			watermarkOverlay = new Image(inputImage.width, inputImage.height);
-			let watermarkTile = new Image(watermarkOverlay.width / 5, watermarkOverlay.height / 5);
+			let tileWidth = watermarkOverlay.width / 5;
+			let tileHeight = watermarkOverlay.height / 5;
 
 			if (cachedBuffers[watermarkType] === undefined)
 				cachedBuffers[watermarkType] = Buffer.from(
@@ -290,20 +291,15 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 				);
 
 			const watermarkTemplate = ((await decode(cachedBuffers[watermarkType]!)) as Image)
-				.resize(watermarkTile.width, Image.RESIZE_AUTO)
+				.resize(tileWidth, Image.RESIZE_AUTO)
 				.rotate(45);
-			watermarkTile = watermarkTile.composite(
-				watermarkTemplate,
-				watermarkTile.width / 2 - watermarkTemplate.width / 2,
-				watermarkTile.height / 2 - watermarkTemplate.height / 2,
-			);
 
 			for (let j = 0; j < 5 + 1; j++) {
 				for (let i = 0; i < j + 2; i++) {
-					const x = i * (watermarkTile.width * 1.5) - (j * watermarkOverlay.height) / 20;
-					const y = j * (watermarkTile.height * 1.5) - i * watermarkTile.height;
+					const x = i * (tileWidth * 1.5) - (j * watermarkOverlay.height) / 30;
+					const y = j * (tileHeight * 1.5) - i * tileHeight + 10 * j + (j * watermarkOverlay.height) / 20;
 					if (x < watermarkOverlay.width && y < watermarkOverlay.height) {
-						watermarkOverlay.composite(watermarkTile, x, y);
+						watermarkOverlay.composite(watermarkTemplate, x, y);
 					}
 				}
 			}
