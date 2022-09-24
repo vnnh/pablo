@@ -27,6 +27,7 @@ type SaturateChannel = "all" | "red" | "green" | "blue";
 
 let cachedBuffers: Partial<{
 	impact: Buffer;
+	block: Buffer;
 
 	shutterstock: Buffer;
 	getty: Buffer;
@@ -110,7 +111,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
 							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
 							Omit<NamedInteractionOption<ApplicationCommandOptionType.String, "type">, "value"> & {
-								value: "getty" | "shutterstock" | "sample" | "bandicam";
+								value: "getty" | "shutterstock" | "sample" | "bandicam" | "fps";
 							},
 						]
 				  >
@@ -236,14 +237,20 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			);
 
 		const inputImage = await decode(Buffer.from(fileBuffer));
-		const textImage = await Image.renderText(cachedBuffers.impact, 24, text.value, encodeHex(textColor), {
-			maxWidth: inputImage.width,
-			maxHeight: Infinity,
-			wrapStyle: "word",
-			verticalAlign: "center",
-			horizontalAlign: "center",
-			wrapHardBreaks: true,
-		});
+		const textImage = await Image.renderText(
+			cachedBuffers.impact,
+			inputImage.width / 24,
+			text.value,
+			encodeHex(textColor),
+			{
+				maxWidth: inputImage.width,
+				maxHeight: Infinity,
+				wrapStyle: "word",
+				verticalAlign: "center",
+				horizontalAlign: "center",
+				wrapHardBreaks: true,
+			},
+		);
 
 		const blankImage = new Image(
 			inputImage.width,
@@ -270,7 +277,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 		const watermarkType = getFromOptions(subcommand, "type")?.value ?? "shutterstock";
 		const inputImage = await decode(Buffer.from(fileBuffer));
 
-		let watermarkOverlay;
+		let watermarkOverlay: Image;
 		if (watermarkType === "sample") {
 			if (cachedBuffers[watermarkType] === undefined)
 				cachedBuffers[watermarkType] = Buffer.from(
@@ -297,7 +304,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 				inputImage.width / 2 - watermark.width / 2,
 				0,
 			);
-		} else {
+		} else if (watermarkType !== "fps") {
 			watermarkOverlay = new Image(inputImage.width, inputImage.height);
 			let tileWidth = watermarkOverlay.width / 5;
 			let tileHeight = watermarkOverlay.height / 5;
@@ -322,10 +329,67 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			}
 		}
 
-		if (inputImage instanceof GIF) {
+		if (watermarkType !== "fps") {
+			if (inputImage instanceof GIF) {
+				for (const [i, v] of inputImage.entries()) {
+					inputImage[i] = Frame.from(
+						(v as Frame).composite(watermarkOverlay!),
+						undefined,
+						undefined,
+						undefined,
+						Frame.DISPOSAL_BACKGROUND,
+					);
+				}
+
+				encoded = await inputImage.encode(100);
+				ext = "gif";
+			} else {
+				encoded = await inputImage.composite(watermarkOverlay!).encode();
+			}
+		} else {
+			if (!(inputImage instanceof GIF)) {
+				return await editResponse(
+					interaction,
+					JSON.stringify({
+						content: "> Input is not a GIF!",
+					} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
+				);
+			}
+
+			if (cachedBuffers.block === undefined)
+				cachedBuffers.block = Buffer.from(
+					readFileSync(join(resolve(process.cwd(), "static"), `Block.ttf`)).buffer,
+				);
+
+			let textImages = [];
+			let maxWidth = 0;
+			let maxHeight = 0;
+			for (let i = 0; i < 5; i++) {
+				const textImage = (
+					await Image.renderText(
+						cachedBuffers.block,
+						inputImage.width / 24,
+						`${57 + i}`,
+						encodeHex("eaeb00ff"),
+						{
+							maxWidth: inputImage.width,
+							maxHeight: Infinity,
+							verticalAlign: "center",
+							horizontalAlign: "center",
+							wrapHardBreaks: true,
+						},
+					)
+				).fill(encodeHex("000000ff"));
+				textImages.push(textImage);
+
+				if (textImage.width > maxWidth) maxWidth = textImage.width;
+				if (textImage.height > maxHeight) maxHeight = textImage.height;
+			}
+			for (let i = 0; i < 5; i++) textImages[i] = textImages[i].resize(maxWidth, maxHeight);
+
 			for (const [i, v] of inputImage.entries()) {
 				inputImage[i] = Frame.from(
-					(v as Frame).composite(watermarkOverlay),
+					(v as Frame).composite(textImages[Math.floor(Math.random() * 4)], inputImage.width - maxWidth),
 					undefined,
 					undefined,
 					undefined,
@@ -335,8 +399,6 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 
 			encoded = await inputImage.encode(100);
 			ext = "gif";
-		} else {
-			encoded = await inputImage.composite(watermarkOverlay).encode();
 		}
 	} else if (subcommand.name === "rotate") {
 		const angle = getFromOptions(subcommand, "angle")?.value;

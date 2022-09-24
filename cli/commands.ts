@@ -104,6 +104,7 @@ const applicationCommands: Array<ApplicationCommandPartial> = [
 							{ name: "shutterstock", value: "shutterstock" },
 							{ name: "sample", value: "sample" },
 							{ name: "bandicam", value: "bandicam" },
+							{ name: "fps", value: "fps" },
 						],
 					},
 				],
