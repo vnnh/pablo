@@ -25,7 +25,13 @@ type CaptionPosition = "top" | "center" | "bottom";
 type InvertAttribute = "color" | "hue" | "saturation" | "value";
 type SaturateChannel = "all" | "red" | "green" | "blue";
 
-let fontBuffer: ArrayBufferLike = undefined!;
+let cachedBuffers: Partial<{
+	impact: Buffer;
+
+	shutterstock: Buffer;
+	getty: Buffer;
+	sample: Buffer;
+}> = {};
 
 const editResponse = async (
 	interaction: APIBaseInteraction<InteractionType.ApplicationCommand, unknown>,
@@ -91,8 +97,20 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
 							NamedInteractionOption<ApplicationCommandOptionType.String, "text">,
 							NamedInteractionOption<ApplicationCommandOptionType.Boolean, "overlay">,
-							NamedInteractionOption<ApplicationCommandOptionType.String, "position">,
+							Omit<NamedInteractionOption<ApplicationCommandOptionType.String, "position">, "value"> & {
+								value: CaptionPosition;
+							},
 							NamedInteractionOption<ApplicationCommandOptionType.String, "color">,
+						]
+				  >
+				| NamedInteractionGroupOption<
+						"watermark",
+						[
+							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
+							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
+							Omit<NamedInteractionOption<ApplicationCommandOptionType.String, "type">, "value"> & {
+								value: "getty" | "shutterstock" | "sample";
+							},
 						]
 				  >
 				| NamedInteractionGroupOption<
@@ -116,7 +134,9 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 						[
 							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
 							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
-							NamedInteractionOption<ApplicationCommandOptionType.String, "attribute">,
+							Omit<NamedInteractionOption<ApplicationCommandOptionType.String, "attribute">, "value"> & {
+								value: InvertAttribute;
+							},
 						]
 				  >
 				| NamedInteractionGroupOption<
@@ -125,7 +145,9 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 							NamedInteractionOption<ApplicationCommandOptionType.Attachment, "file">,
 							NamedInteractionOption<ApplicationCommandOptionType.String, "url">,
 							NamedInteractionOption<ApplicationCommandOptionType.Number, "saturation">,
-							NamedInteractionOption<ApplicationCommandOptionType.String, "channel">,
+							Omit<NamedInteractionOption<ApplicationCommandOptionType.String, "channel">, "value"> & {
+								value: SaturateChannel;
+							},
 						]
 				  >
 			)
@@ -167,12 +189,14 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 	let encoded: Uint8Array | undefined;
 	let ext: "gif" | "png" = "png";
 	if (subcommand.name === "caption") {
-		if (fontBuffer === undefined)
-			fontBuffer = readFileSync(join(resolve(process.cwd(), "static"), "Impact.ttf")).buffer;
+		if (cachedBuffers.impact === undefined)
+			cachedBuffers.impact = Buffer.from(
+				readFileSync(join(resolve(process.cwd(), "static"), "Impact.ttf")).buffer,
+			);
 
 		const text = getFromOptions(subcommand, "text");
 		const isOverlay = getFromOptions(subcommand, "overlay")?.value ?? true;
-		const position = (getFromOptions(subcommand, "position")?.value ?? "top") as CaptionPosition;
+		const position = getFromOptions(subcommand, "position")?.value ?? "top";
 		const color = getFromOptions(subcommand, "color")?.value ?? "#fff | #000";
 
 		let textColor = "";
@@ -211,7 +235,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			);
 
 		const inputImage = await decode(Buffer.from(fileBuffer));
-		const textImage = await Image.renderText(Buffer.from(fontBuffer), 24, text.value, encodeHex(textColor), {
+		const textImage = await Image.renderText(cachedBuffers.impact, 24, text.value, encodeHex(textColor), {
 			maxWidth: inputImage.width,
 			maxHeight: Infinity,
 			wrapStyle: "word",
@@ -240,6 +264,66 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			ext = "gif";
 		} else {
 			encoded = await placeComposite(blankImage, inputImage, textImage, position, isOverlay).encode();
+		}
+	} else if (subcommand.name === "watermark") {
+		const watermarkType = getFromOptions(subcommand, "type")?.value ?? "shutterstock";
+		const inputImage = await decode(Buffer.from(fileBuffer));
+
+		let watermarkOverlay;
+		if (watermarkType === "sample") {
+			if (cachedBuffers[watermarkType] === undefined)
+				cachedBuffers[watermarkType] = Buffer.from(
+					readFileSync(join(resolve(process.cwd(), "static"), `${watermarkType}.png`)).buffer,
+				);
+
+			watermarkOverlay = ((await decode(cachedBuffers[watermarkType]!)) as Image).resize(
+				inputImage.width >= inputImage.height ? inputImage.width : Image.RESIZE_AUTO,
+				inputImage.height >= inputImage.width ? inputImage.height : Image.RESIZE_AUTO,
+			);
+		} else {
+			watermarkOverlay = new Image(inputImage.width, inputImage.height);
+			let watermarkTile = new Image(watermarkOverlay.width / 5, watermarkOverlay.height / 5);
+
+			if (cachedBuffers[watermarkType] === undefined)
+				cachedBuffers[watermarkType] = Buffer.from(
+					readFileSync(join(resolve(process.cwd(), "static"), `${watermarkType}.png`)).buffer,
+				);
+
+			const watermarkTemplate = ((await decode(cachedBuffers[watermarkType]!)) as Image)
+				.resize(watermarkTile.width, Image.RESIZE_AUTO)
+				.rotate(45);
+			watermarkTile = watermarkTile.composite(
+				watermarkTemplate,
+				watermarkTile.width / 2 - watermarkTemplate.width / 2,
+				watermarkTile.height / 2 - watermarkTemplate.height / 2,
+			);
+
+			for (let j = 0; j < 5 + 1; j++) {
+				for (let i = 0; i < j + 2; i++) {
+					const x = i * (watermarkTile.width * 1.5) - (j * watermarkOverlay.height) / 20;
+					const y = j * (watermarkTile.height * 1.5) - i * watermarkTile.height;
+					if (x < watermarkOverlay.width && y < watermarkOverlay.height) {
+						watermarkOverlay.composite(watermarkTile, x, y);
+					}
+				}
+			}
+		}
+
+		if (inputImage instanceof GIF) {
+			for (const [i, v] of inputImage.entries()) {
+				inputImage[i] = Frame.from(
+					(v as Frame).composite(watermarkOverlay),
+					undefined,
+					undefined,
+					undefined,
+					Frame.DISPOSAL_BACKGROUND,
+				);
+			}
+
+			encoded = await inputImage.encode(100);
+			ext = "gif";
+		} else {
+			encoded = await inputImage.composite(watermarkOverlay).encode();
 		}
 	} else if (subcommand.name === "rotate") {
 		const angle = getFromOptions(subcommand, "angle")?.value;
@@ -318,7 +402,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 			encoded = await inputImage.roundCorners(calculatedRadius).encode();
 		}
 	} else if (subcommand.name === "invert") {
-		const attr = (getFromOptions(subcommand, "attribute")?.value ?? "color") as InvertAttribute;
+		const attr = getFromOptions(subcommand, "attribute")?.value ?? "color";
 
 		const inputImage = await decode(Buffer.from(fileBuffer));
 		if (inputImage instanceof GIF) {
@@ -347,7 +431,7 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 				} as RESTPatchAPIWebhookWithTokenMessageJSONBody),
 			);
 
-		const channel = (getFromOptions(subcommand, "channel")?.value ?? "all") as SaturateChannel;
+		const channel = getFromOptions(subcommand, "channel")?.value ?? "all";
 		const inputImage = await decode(Buffer.from(fileBuffer));
 		if (inputImage instanceof GIF) {
 			for (const [i, v] of inputImage.entries()) {

@@ -81,6 +81,33 @@ const applicationCommands: Array<ApplicationCommandPartial> = [
 				],
 			},
 			{
+				name: "watermark",
+				description: "watermark an image",
+				type: ApplicationCommandOptionType.SUB_COMMAND,
+				options: [
+					{
+						name: "file",
+						description: "input option 1",
+						type: ATTACHMENT,
+					},
+					{
+						name: "url",
+						description: "input option 2",
+						type: ApplicationCommandOptionType.STRING,
+					},
+					{
+						name: "type",
+						description: "the watermark type",
+						type: ApplicationCommandOptionType.STRING,
+						choices: [
+							{ name: "getty", value: "getty" },
+							{ name: "shutterstock", value: "shutterstock" },
+							{ name: "sample", value: "sample" },
+						],
+					},
+				],
+			},
+			{
 				name: "rotate",
 				description: "rotate an image",
 				type: ApplicationCommandOptionType.SUB_COMMAND,
