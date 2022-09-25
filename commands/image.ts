@@ -362,34 +362,31 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 				);
 
 			let textImages = [];
-			let maxWidth = 0;
-			let maxHeight = 0;
 			for (let i = 0; i < 5; i++) {
-				const textImage = (
-					await Image.renderText(
-						cachedBuffers.block,
-						inputImage.width / 24,
-						`${57 + i}`,
-						encodeHex("eaeb00ff"),
-						{
-							maxWidth: inputImage.width,
-							maxHeight: Infinity,
-							verticalAlign: "center",
-							horizontalAlign: "center",
-							wrapHardBreaks: true,
-						},
-					)
-				).fill(encodeHex("000000ff"));
-				textImages.push(textImage);
-
-				if (textImage.width > maxWidth) maxWidth = textImage.width;
-				if (textImage.height > maxHeight) maxHeight = textImage.height;
+				const textImage = await Image.renderText(
+					cachedBuffers.block,
+					inputImage.width / 24,
+					`${58 + i}`,
+					encodeHex("eaeb00ff"),
+					{
+						maxWidth: inputImage.width,
+						maxHeight: Infinity,
+						verticalAlign: "center",
+						horizontalAlign: "center",
+					},
+				);
+				const watermarkImage = new Image(44, textImage.height - 4)
+					.fill(encodeHex("000000ff"))
+					.composite(textImage, -textImage.width + 40);
+				textImages.push(watermarkImage);
 			}
-			for (let i = 0; i < 5; i++) textImages[i] = textImages[i].resize(maxWidth, maxHeight);
 
 			for (const [i, v] of inputImage.entries()) {
 				inputImage[i] = Frame.from(
-					(v as Frame).composite(textImages[Math.floor(Math.random() * 4)], inputImage.width - maxWidth),
+					(v as Frame).composite(
+						textImages[Math.floor(Math.random() * 4)],
+						inputImage.width - (v as Frame).width,
+					),
 					undefined,
 					undefined,
 					undefined,
