@@ -369,15 +369,15 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 					`${58 + i}`,
 					encodeHex("eaeb00ff"),
 					{
-						maxWidth: inputImage.width,
+						maxWidth: Infinity,
 						maxHeight: Infinity,
 						verticalAlign: "center",
 						horizontalAlign: "center",
 					},
 				);
-				const watermarkImage = new Image(44, textImage.height - 4)
+				const watermarkImage = new Image(textImage.width + 6, textImage.height - 4)
 					.fill(encodeHex("000000ff"))
-					.composite(textImage, -textImage.width + 40);
+					.composite(textImage, 3);
 
 				textImages.push(watermarkImage);
 			}
