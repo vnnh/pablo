@@ -378,15 +378,14 @@ export default async <InteractionData extends APIChatInputApplicationCommandInte
 				const watermarkImage = new Image(44, textImage.height - 4)
 					.fill(encodeHex("000000ff"))
 					.composite(textImage, -textImage.width + 40);
+
 				textImages.push(watermarkImage);
 			}
 
 			for (const [i, v] of inputImage.entries()) {
+				const textImage = textImages[Math.floor(Math.random() * 4)];
 				inputImage[i] = Frame.from(
-					(v as Frame).composite(
-						textImages[Math.floor(Math.random() * 4)],
-						inputImage.width - (v as Frame).width,
-					),
+					(v as Frame).composite(textImage, inputImage.width - textImage.width),
 					undefined,
 					undefined,
 					undefined,
